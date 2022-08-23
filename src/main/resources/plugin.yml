@@ -1,0 +1,22 @@
+name: InfValets
+version: '${project.version}'
+main: me.v0rham.infvalets.Main
+api-version: 1.19
+authors: [ V0rHaM ]
+
+commands:
+  balance:
+    usage: /<command>
+    description: Shows the balance
+    aliases:
+      - bal
+      - money
+  pay:
+    usage: /<command> [player name] [cash]
+    description: Transfers money to another account
+  paycommands:
+    usage: /<command> [cost] [server|player] [command]
+    description: Executes commands for the number of coins
+    aliases:
+      - paycmd
+      - payc

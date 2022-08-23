@@ -1,0 +1,4 @@
+Settings:
+  database-string: 'jdbc:sqlite:plugins/InfValets/data.db'
+
+Messages:
