@@ -12,18 +12,18 @@ public class Balance implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        int maxLine = page * 5;
-        int minLine = ((page - 1) * 5) + 1;
-        int pageValue = (inviteList.size() % 5 == 0) ? (inviteList.size() / 5) : ((inviteList.size() / 5) + 1);
-        msg.replaceAll("%page%", page + "/" + pageValue);
+//        int maxLine = page * 5;
+//        int minLine = ((page - 1) * 5) + 1;
+//        int pageValue = (inviteList.size() % 5 == 0) ? (inviteList.size() / 5) : ((inviteList.size() / 5) + 1);
+//        msg.replaceAll("%page%", page + "/" + pageValue);
         return false;
     }
 
-    public HashMap<String, Integer> getBalance(Player player) {
-        HashMap<String, Integer> balance = new HashMap<>();
-
-
-    }
+//    public HashMap<String, Integer> getBalance(Player player) {
+//        HashMap<String, Integer> balance = new HashMap<>();
+//
+//
+//    }
 }
 
 
