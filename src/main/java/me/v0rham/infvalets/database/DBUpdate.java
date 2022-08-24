@@ -5,22 +5,27 @@ import me.v0rham.infvalets.Main;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class DBUpdate {
 
-    public void createTable(String request) {
+    public void createTable(String valetName) {
         try {
-            PreparedStatement preparedStatement = Main.SQL.getConnection().prepareStatement(request);
+            PreparedStatement preparedStatement = Main.SQL.getConnection()
+                    .prepareStatement("CREATE TABLE IF NOT EXISTS InfValets_" + valetName +
+                            " (NAME VARCHAR(100), UUID VARCHAR(100), VALET_NAME VARCHAR(100)" +
+                            "VALET_COUNT INT, PRIMARY KEY (UUID))");
             preparedStatement.executeUpdate();
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
     }
 
-    public static boolean exists(String tableName, String column, String condition) {
+    public static boolean existsPlayer(UUID uuid) {
         try {
             PreparedStatement preparedStatement = Main.SQL.getConnection()
-                    .prepareStatement("SELECT EXISTS ( SELECT " + column + " FROM " + tableName + " WHERE " + condition + " limit 1)");
+                    .prepareStatement("SELECT EXISTS ( SELECT " + uuid + " FROM InfValets WHERE UUID=? limit 1)");
+            preparedStatement.setString(1, uuid.toString());
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next();
         } catch (SQLException exception) {
@@ -32,18 +37,18 @@ public class DBUpdate {
     public static void addData(String request)  {
         try {
                 PreparedStatement preparedStatement1 = Main.SQL.getConnection()
-                        .prepareStatement("INSERT INTO cooldown"
-                                + " (NAME,UUID,TIMER) VALUES (?,?,?)");
+                        .prepareStatement("INSERT INTO InfValet"
+                                + " (NAME,UUID,VALET_NAME) VALUES (?,?,?)");
                 preparedStatement1.executeUpdate();
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
     }
 
-    public static void updateData(String tableName, String updateData, String condition) {
+    public static void addMoney(String valetName, int money) {
         try {
             PreparedStatement preparedStatement = Main.SQL.getConnection()
-                    .prepareStatement("UPDATE " + tableName + " SET " + updateData + " WHERE " + condition);
+                    .prepareStatement("UPDATE InfValet_" + valetName + " SET VALET_VALUE = VALET_VALUE" + money);
             preparedStatement.executeUpdate();
         } catch (SQLException exception) {
             exception.printStackTrace();

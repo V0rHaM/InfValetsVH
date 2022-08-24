@@ -1,8 +1,5 @@
 package me.v0rham.infvalets.database;
 
-import me.v0rham.infvalets.Main;
-
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -17,9 +14,7 @@ public class DBConnect {
 
     public void connect() throws SQLException {
         if (!isConnected()) {
-            connection = DriverManager.getConnection(Main.getInstance()
-                    .getConfig().getString("Settings.database-string",
-                    "jdbc:sqlite:" + Main.getInstance().getDataFolder().getName() + "/data.db"));
+            connection = DriverManager.getConnection("jdbc:sqlite:plugins/InfValets/data.db");
         }
     }
 
