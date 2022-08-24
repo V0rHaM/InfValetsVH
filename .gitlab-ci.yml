@@ -9,12 +9,12 @@ stages:
 - build
 - upload
 - test
-before_script:
-- pacman -Suy --noconfirm
-- pacman -S --noconfirm maven jdk17-openjdk git
-- source /etc/profile.d/jre.sh
 build:
   stage: build
+  before_script:
+  - pacman -Suy --noconfirm
+  - pacman -S --noconfirm maven jdk17-openjdk git
+  - source /etc/profile.d/jre.sh
   script:
   - mvn clean verify
   - mv target/InfValets*.jar ./InfValets.jar
