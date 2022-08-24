@@ -1,5 +1,9 @@
-Settings:
-
 Valet:
-  - coin
-  - coin2
+  coin:
+    can_convert: false
+    limit: 100_000_000
+    connect: 'none'
+  valet23:
+    can_convert: false
+    limit: 100_000_000
+    connect: 'coin'

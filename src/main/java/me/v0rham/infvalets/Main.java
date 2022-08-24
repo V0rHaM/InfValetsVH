@@ -1,5 +1,7 @@
 package me.v0rham.infvalets;
 
+import me.v0rham.infvalets.commands.balance.Balance;
+import me.v0rham.infvalets.commands.balance.BalanceTabComplete;
 import me.v0rham.infvalets.database.DBConnect;
 import me.v0rham.infvalets.database.DBUpdate;
 import org.bukkit.Bukkit;
@@ -23,7 +25,15 @@ public class Main extends JavaPlugin {
             this.getServer().getLogger().info(ChatColor.GREEN + "Vault connected!");
         }
         saveDefaultConfig();
-
+        this.getCommand("balance").setExecutor(new Balance());
+        this.getCommand("balance").setTabCompleter(new BalanceTabComplete());
+        if (SQL.isConnected()) {
+            for (String valetName : this.getConfig().getConfigurationSection("Valet").getKeys(false)) {
+                if (valetName != null) {
+                    DBUpdate.createTable(valetName);
+                }
+            }
+        }
     }
 
     @Override

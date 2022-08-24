@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class DBUpdate {
 
-    public void createTable(String valetName) {
+    public static void createTable(String valetName) {
         try {
             PreparedStatement preparedStatement = Main.SQL.getConnection()
                     .prepareStatement("CREATE TABLE IF NOT EXISTS InfValets_" + valetName +
