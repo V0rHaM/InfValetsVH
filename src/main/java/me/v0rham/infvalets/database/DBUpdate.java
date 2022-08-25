@@ -9,12 +9,12 @@ import java.util.UUID;
 
 public class DBUpdate {
 
-    public static void createTable(String valetName) {
+    public void createTable(String valetName) {
         try {
             PreparedStatement preparedStatement = Main.SQL.getConnection()
                     .prepareStatement("CREATE TABLE IF NOT EXISTS InfValets_" + valetName +
-                            " (NAME VARCHAR(100), UUID VARCHAR(100), VALET_NAME VARCHAR(100)" +
-                            "VALET_COUNT INT, PRIMARY KEY (UUID))");
+                            " (NAME VARCHAR(100), UUID VARCHAR(100), VALET_NAME VARCHAR(100)," +
+                            " VALET_COUNT INT(100), PRIMARY KEY (UUID))");
             preparedStatement.executeUpdate();
         } catch (SQLException exception) {
             exception.printStackTrace();

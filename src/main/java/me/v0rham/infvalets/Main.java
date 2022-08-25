@@ -8,6 +8,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.sql.SQLException;
+
 public class Main extends JavaPlugin {
 
     public static Main instance;
@@ -27,10 +29,16 @@ public class Main extends JavaPlugin {
         saveDefaultConfig();
         this.getCommand("balance").setExecutor(new Balance());
         this.getCommand("balance").setTabCompleter(new BalanceTabComplete());
+        try {
+            SQL.connect();
+            this.getServer().getLogger().info(ChatColor.GREEN + "Database connected!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         if (SQL.isConnected()) {
             for (String valetName : this.getConfig().getConfigurationSection("Valet").getKeys(false)) {
                 if (valetName != null) {
-                    DBUpdate.createTable(valetName);
+                    data.createTable(valetName);
                 }
             }
         }
