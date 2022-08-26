@@ -7,3 +7,5 @@ Valet:
     can_convert: false
     limit: 100_000_000
     connect: 'coin'
+Database:
+  url: 'jdbc:sqlite:plugins/InfValets/data.db'
