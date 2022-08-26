@@ -1,11 +1,11 @@
 package me.v0rham.infvalets.database;
 
 import me.v0rham.infvalets.Main;
+import org.bukkit.entity.Player;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 
 public class DBUpdate {
 
@@ -13,7 +13,7 @@ public class DBUpdate {
         try {
             PreparedStatement preparedStatement = Main.SQL.getConnection()
                     .prepareStatement("CREATE TABLE IF NOT EXISTS InfValets_" + valetName +
-                            " (NAME VARCHAR(100), UUID VARCHAR(100), VALET_NAME VARCHAR(100)," +
+                            " (NAME VARCHAR(100), UUID VARCHAR(100)," +
                             " VALET_COUNT INT(100), PRIMARY KEY (UUID))");
             preparedStatement.executeUpdate();
         } catch (SQLException exception) {
@@ -21,49 +21,49 @@ public class DBUpdate {
         }
     }
 
-    public static boolean existsPlayer(UUID uuid) {
-        try {
-            PreparedStatement preparedStatement = Main.SQL.getConnection()
-                    .prepareStatement("SELECT EXISTS ( SELECT " + uuid + " FROM InfValets WHERE UUID=? limit 1)");
-            preparedStatement.setString(1, uuid.toString());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            return resultSet.next();
-        } catch (SQLException exception) {
-            exception.printStackTrace();
-        }
-        return false;
-    }
-
-    public static void addData(String request)  {
+    public void createPlayerData(Player player, String valetName)  {
         try {
                 PreparedStatement preparedStatement1 = Main.SQL.getConnection()
-                        .prepareStatement("INSERT INTO InfValet"
-                                + " (NAME,UUID,VALET_NAME) VALUES (?,?,?)");
+                        .prepareStatement("INSERT INTO InfValets_" + valetName
+                                + " (NAME,UUID,VALET_COUNT) VALUES (?,?,?)");
+                preparedStatement1.setString(1, player.getName());
+                preparedStatement1.setString(2, player.getUniqueId().toString());
+                preparedStatement1.setInt(3, 0);
                 preparedStatement1.executeUpdate();
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
     }
 
-    public static void addMoney(String valetName, int money) {
+    public void addMoney(String valetName, int money) {
         try {
             PreparedStatement preparedStatement = Main.SQL.getConnection()
-                    .prepareStatement("UPDATE InfValet_" + valetName + " SET VALET_VALUE = VALET_VALUE" + money);
+                    .prepareStatement("UPDATE InfValet_" + valetName + " SET VALET_COUNT = VALET_COUNT + " + money);
             preparedStatement.executeUpdate();
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
     }
 
-    public static String getDataStr(String tableName, String column, String condition) {
+    public int getBalance(String valetName) {
         try {
             PreparedStatement preparedStatement = Main.SQL.getConnection()
-                    .prepareStatement("SELECT " + column + " FROM " + tableName + " WHERE " + condition);
+                    .prepareStatement("SELECT VALET_COUNT FROM InfValets_" + valetName + " WHERE UUID=? limit 1");
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) return resultSet.toString();
+            if (resultSet.next()) return Integer.parseInt(resultSet.toString());
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+        return 0;
+    }
+
+    public void takeMoney(String valetName, int money) {
+        try {
+            PreparedStatement preparedStatement = Main.SQL.getConnection()
+                    .prepareStatement("UPDATE InfValet_" + valetName + " SET VALET_COUNT = VALET_COUNT - " + money);
+            preparedStatement.executeUpdate();
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
-        return null;
     }
 }
