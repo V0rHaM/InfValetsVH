@@ -21,6 +21,16 @@ Database:
   #   jdbc:postgresql://localhost:5432/db?user=USER&password=PASS
   url: 'jdbc:sqlite:plugins/InfValets/data.db'
 
+# Интеграция с Vault (необязательна: плагин работает и без него)
+Vault:
+  # Регистрировать Economy-провайдер, если на сервере есть Vault
+  enabled: true
+  # Валюта, с которой будет работать Vault (по умолчанию — первая из секции Valet)
+  valet: coin
+  # Название валюты (для Vault-плагинов: магазины, /baltop и т.д.)
+  name-singular: 'монета'
+  name-plural: 'монет'
+
 Messages:
   prefix: '&7[&dInf&6Valets&7]'
   Errors:

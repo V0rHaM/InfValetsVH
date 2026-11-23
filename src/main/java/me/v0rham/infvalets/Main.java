@@ -6,6 +6,7 @@ import me.v0rham.infvalets.commands.balance.Balance;
 import me.v0rham.infvalets.commands.balance.BalanceTabComplete;
 import me.v0rham.infvalets.commands.cost.CostCommand;
 import me.v0rham.infvalets.commands.pay.Pay;
+import me.v0rham.infvalets.hook.VaultHook;
 import me.v0rham.infvalets.database.DBConnect;
 import me.v0rham.infvalets.database.DBUpdate;
 import org.bukkit.Bukkit;
@@ -77,9 +78,9 @@ public class Main extends JavaPlugin {
             new PlaceholdersAPI(this).register();
             getLogger().info("PlaceholderAPI has successful hooked.");
         }
-        if (Bukkit.getPluginManager().isPluginEnabled("Vault")) {
-            // TODO: зарегистрировать Economy-провайдер (пока только лог)
-            getLogger().info("Vault found (Economy provider is not implemented yet).");
+        // Vault не обязателен: если он есть, другие плагины смогут работать с InfValets через него
+        if (getConfig().getBoolean("Vault.enabled", true) && Bukkit.getPluginManager().isPluginEnabled("Vault")) {
+            VaultHook.register(this);
         }
     }
 
