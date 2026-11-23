@@ -81,11 +81,14 @@ public class DBUpdate {
     }
 
     public synchronized void set(UUID uuid, String name, String valet, long amount) throws SQLException {
+        String update = name == null
+                ? "VALET_COUNT = excluded.VALET_COUNT"
+                : "NAME = excluded.NAME, VALET_COUNT = excluded.VALET_COUNT";
         String sql = "INSERT INTO " + table(valet) + " (UUID, NAME, VALET_COUNT) VALUES (?, ?, ?)"
-                + " ON CONFLICT (UUID) DO UPDATE SET NAME = excluded.NAME, VALET_COUNT = excluded.VALET_COUNT";
+                + " ON CONFLICT (UUID) DO UPDATE SET " + update;
         try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
             ps.setString(1, uuid.toString());
-            ps.setString(2, safeName(name));
+            ps.setString(2, name);
             ps.setLong(3, amount);
             ps.executeUpdate();
         }
@@ -125,7 +128,7 @@ public class DBUpdate {
             ps.setInt(1, size);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    result.add(new AbstractMap.SimpleEntry<>(rs.getString(1), rs.getLong(2)));
+                    result.add(new AbstractMap.SimpleEntry<>(safeName(rs.getString(1)), rs.getLong(2)));
                 }
             }
         }
@@ -134,11 +137,12 @@ public class DBUpdate {
 
     // Создаёт запись игрока (баланс 0) или обновляет ник
     private void ensureRow(Connection connection, UUID uuid, String name, String valet) throws SQLException {
+        String action = name == null ? "DO NOTHING" : "DO UPDATE SET NAME = excluded.NAME";
         String sql = "INSERT INTO " + table(valet) + " (UUID, NAME, VALET_COUNT) VALUES (?, ?, 0)"
-                + " ON CONFLICT (UUID) DO UPDATE SET NAME = excluded.NAME";
+                + " ON CONFLICT (UUID) " + action;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, uuid.toString());
-            ps.setString(2, safeName(name));
+            ps.setString(2, name);
             ps.executeUpdate();
         }
     }

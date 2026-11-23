@@ -1,7 +1,10 @@
 package me.v0rham.infvalets;
 
+import me.v0rham.infvalets.api.InfValetsAPI;
+import me.v0rham.infvalets.api.InfValetsAPIImpl;
 import me.v0rham.infvalets.commands.balance.Balance;
 import me.v0rham.infvalets.commands.balance.BalanceTabComplete;
+import me.v0rham.infvalets.commands.cost.CostCommand;
 import me.v0rham.infvalets.commands.pay.Pay;
 import me.v0rham.infvalets.database.DBConnect;
 import me.v0rham.infvalets.database.DBUpdate;
@@ -10,6 +13,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -58,9 +62,15 @@ public class Main extends JavaPlugin {
             return;
         }
 
+        // Публичное API: другие плагины получают его через InfValetsAPI.get()
+        getServer().getServicesManager().register(InfValetsAPI.class, new InfValetsAPIImpl(this),
+                this, ServicePriority.Normal);
+
         registerCommand("balance", new Balance(), new BalanceTabComplete());
         Pay pay = new Pay();
         registerCommand("pay", pay, pay);
+        CostCommand cost = new CostCommand();
+        registerCommand("costcommands", cost, cost);
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new PlaceholdersAPI(this).register();
@@ -74,6 +84,7 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getServer().getServicesManager().unregisterAll(this);
         if (database != null) {
             database.disconnect();
             getLogger().info("Database disconnected!");

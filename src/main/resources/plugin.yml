@@ -19,6 +19,12 @@ commands:
   pay:
     usage: /<command> <игрок> [валюта] <сумма>
     description: Transfers money to another account
+  costcommands:
+    usage: /<command> <название>
+    description: Executes commands for the number of coins
+    aliases:
+      - paycmd
+      - payc
 
 permissions:
   infvalets.balance:
@@ -29,6 +35,9 @@ permissions:
     default: op
   infvalets.pay:
     description: Переводы между игроками
+    default: true
+  infvalets.costcommands:
+    description: Платные команды из секции CostCommands
     default: true
   infvalets.admin:
     description: give / take / set

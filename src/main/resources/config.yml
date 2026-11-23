@@ -33,9 +33,11 @@ Messages:
     not-enough: '&cНедостаточно средств!'
     limit-reached: '&cПревышен лимит валюты!'
     pay-self: '&cНельзя перевести деньги самому себе!'
+    unknown-costcommand: '&cТакой платной команды нет!'
   usage-balance: '&7Использование: &e/balance <игрок|валюта|top>'
   usage-top: '&7Использование: &e/balance top <валюта>'
   usage-admin: '&7Использование: &e/balance <give|take|set> <игрок> <валюта> <сумма>'
+  usage-costcommand: '&7Использование: &e/costcommands <название>'
   usage-pay: '&7Использование: &e/pay <игрок> [валюта] <сумма>'
   # Плейсхолдеры: %player% %valet% %amount% %pos%
   balance-header: '&6В вашем кошельке:'
@@ -48,14 +50,17 @@ Messages:
   admin-take: '&aУ игрока &e%player% &aсписано &e%amount% %valet%'
   admin-set: '&aБаланс игрока &e%player% &aв &e%valet% &aтеперь &e%amount%'
   pay-sent: '&aВы перевели &e%amount% %valet% &aигроку &e%player%'
+  cost-paid: '&aСписано &e%amount% %valet%'
   pay-received: '&aИгрок &e%player% &aперевёл вам &e%amount% %valet%'
 
-# Готовые команды (пока не реализовано)
+# Платные команды: /costcommands <название>
 CostCommands:
   # Название команды
   say-hello:
     # Стоимость исполнения команды
     cost: 100
+    # Валюта списания (можно не указывать, если валюта в плагине одна)
+    valet: coin
     # Тип исполнения команд
     # SERVER = исполняет команды от имени сервера
     # PLAYER = исполняет команды от именя игрока
