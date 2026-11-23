@@ -12,8 +12,8 @@
     <name>InfValets</name>
 
     <properties>
-        <!-- Paper 1.19.2 собран под Java 17 -->
-        <java.version>17</java.version>
+        <!-- Java 8 байткод запускается на любой более новой JVM (Java 25 на Paper 26.x в том числе) -->
+        <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -49,6 +49,10 @@
 
     <repositories>
         <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
@@ -67,10 +71,14 @@
     </repositories>
 
     <dependencies>
+        <!--
+            Компилируем против самого старого API, который нам нужен: так в код не попадут вызовы,
+            которых нет на старых серверах, а на новых (до 26.x) всё работает за счёт обратной совместимости.
+        -->
         <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.19.2-R0.1-SNAPSHOT</version>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

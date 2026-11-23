@@ -2,7 +2,6 @@ package me.v0rham.infvalets.api;
 
 import me.v0rham.infvalets.Main;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -10,6 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public final class Api {
@@ -39,8 +39,17 @@ public final class Api {
         return translateColor(msg);
     }
 
+    // Свой перевод &-кодов в §-коды: не зависит от устаревающего org.bukkit.ChatColor
     public static String translateColor(String text) {
-        return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text);
+        if (text == null) return "";
+        char[] chars = text.toCharArray();
+        for (int i = 0; i < chars.length - 1; i++) {
+            if (chars[i] == '&' && "0123456789AaBbCcDdEeFfKkLlMmNnOoRrXx".indexOf(chars[i + 1]) > -1) {
+                chars[i] = '\u00A7';
+                chars[i + 1] = Character.toLowerCase(chars[i + 1]);
+            }
+        }
+        return new String(chars);
     }
 
     /** Возвращает сумму или -1, если строка не число / не положительная (0 разрешён при allowZero). */
@@ -58,11 +67,26 @@ public final class Api {
         return String.format(Locale.ROOT, "%,d", amount);
     }
 
-    /** Онлайн-игрок или офлайн-игрок, который уже заходил на сервер. null — не найден. */
+    /**
+     * Ищет игрока по нику: онлайн -> база InfValets -> известные серверу офлайн-игроки.
+     * Работает на Spigot и Paper любых версий. null — не найден.
+     */
     public static OfflinePlayer resolvePlayer(String name) {
         Player online = Bukkit.getPlayerExact(name);
         if (online != null) return online;
-        return Bukkit.getOfflinePlayerIfCached(name);
+
+        Main plugin = Main.getInstance();
+        try {
+            UUID uuid = plugin.getData().findUuid(name, plugin.getValets());
+            if (uuid != null) return Bukkit.getOfflinePlayer(uuid);
+        } catch (SQLException exception) {
+            plugin.getLogger().log(Level.WARNING, "Player lookup failed", exception);
+        }
+
+        for (OfflinePlayer known : Bukkit.getOfflinePlayers()) {
+            if (known.getName() != null && known.getName().equalsIgnoreCase(name)) return known;
+        }
+        return null;
     }
 
     public static String nameOf(OfflinePlayer player) {

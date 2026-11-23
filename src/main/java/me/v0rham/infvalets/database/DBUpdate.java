@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,6 +15,9 @@ import java.util.UUID;
 /**
  * Все методы принимают ТОЛЬКО имена валют, уже проверенные через Main#findValet
  * (имя таблицы нельзя передать параметром, поэтому оно склеивается в запрос).
+ * <p>
+ * SQL написан переносимо (без UPSERT), чтобы работать и на старых встроенных SQLite
+ * (серверы 1.13+), и на PostgreSQL.
  */
 public class DBUpdate {
 
@@ -81,15 +85,12 @@ public class DBUpdate {
     }
 
     public synchronized void set(UUID uuid, String name, String valet, long amount) throws SQLException {
-        String update = name == null
-                ? "VALET_COUNT = excluded.VALET_COUNT"
-                : "NAME = excluded.NAME, VALET_COUNT = excluded.VALET_COUNT";
-        String sql = "INSERT INTO " + table(valet) + " (UUID, NAME, VALET_COUNT) VALUES (?, ?, ?)"
-                + " ON CONFLICT (UUID) DO UPDATE SET " + update;
-        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
-            ps.setString(1, uuid.toString());
-            ps.setString(2, name);
-            ps.setLong(3, amount);
+        Connection connection = db.getConnection();
+        ensureRow(connection, uuid, name, valet);
+        String sql = "UPDATE " + table(valet) + " SET VALET_COUNT = ? WHERE UUID = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, amount);
+            ps.setString(2, uuid.toString());
             ps.executeUpdate();
         }
     }
@@ -135,15 +136,37 @@ public class DBUpdate {
         return result;
     }
 
-    // Создаёт запись игрока (баланс 0) или обновляет ник
+    /** UUID игрока по последнему известному нику (без учёта регистра) или null. */
+    public synchronized UUID findUuid(String name, Collection<String> valets) throws SQLException {
+        for (String valet : valets) {
+            String sql = "SELECT UUID FROM " + table(valet) + " WHERE LOWER(NAME) = LOWER(?)";
+            try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+                ps.setString(1, name);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return UUID.fromString(rs.getString(1));
+                }
+            }
+        }
+        return null;
+    }
+
+    // Создаёт запись игрока (баланс 0), если её нет, и обновляет ник (если он известен)
     private void ensureRow(Connection connection, UUID uuid, String name, String valet) throws SQLException {
-        String action = name == null ? "DO NOTHING" : "DO UPDATE SET NAME = excluded.NAME";
-        String sql = "INSERT INTO " + table(valet) + " (UUID, NAME, VALET_COUNT) VALUES (?, ?, 0)"
-                + " ON CONFLICT (UUID) " + action;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        String insert = db.isPostgres()
+                ? "INSERT INTO " + table(valet) + " (UUID, NAME, VALET_COUNT) VALUES (?, ?, 0) ON CONFLICT (UUID) DO NOTHING"
+                : "INSERT OR IGNORE INTO " + table(valet) + " (UUID, NAME, VALET_COUNT) VALUES (?, ?, 0)";
+        try (PreparedStatement ps = connection.prepareStatement(insert)) {
             ps.setString(1, uuid.toString());
             ps.setString(2, name);
             ps.executeUpdate();
+        }
+        if (name != null) {
+            String update = "UPDATE " + table(valet) + " SET NAME = ? WHERE UUID = ?";
+            try (PreparedStatement ps = connection.prepareStatement(update)) {
+                ps.setString(1, name);
+                ps.setString(2, uuid.toString());
+                ps.executeUpdate();
+            }
         }
     }
 

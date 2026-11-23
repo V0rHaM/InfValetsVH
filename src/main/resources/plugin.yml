@@ -1,7 +1,8 @@
 name: InfValets
 version: ${project.version}
 main: me.v0rham.infvalets.Main
-api-version: '1.19'
+# Минимальная версия API: плагин запускается на Minecraft 1.13 ... 26.x
+api-version: '1.13'
 authors: [ V0rHaM ]
 softdepend: [ PlaceholderAPI, Vault ]
 

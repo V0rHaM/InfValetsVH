@@ -10,6 +10,7 @@ public class DBConnect {
 
     private final Main plugin;
     private Connection connection;
+    private boolean postgres;
 
     public DBConnect(Main plugin) {
         this.plugin = plugin;
@@ -23,10 +24,16 @@ public class DBConnect {
         }
     }
 
+    /** true, если используется PostgreSQL (иначе SQLite). */
+    public boolean isPostgres() {
+        return postgres;
+    }
+
     public void connect() throws SQLException {
         if (isConnected()) return;
 
         String url = plugin.getConfig().getString("Database.url", "jdbc:sqlite:plugins/InfValets/data.db");
+        postgres = url.startsWith("jdbc:postgresql:");
         loadDriver(url);
         connection = DriverManager.getConnection(url);
     }
