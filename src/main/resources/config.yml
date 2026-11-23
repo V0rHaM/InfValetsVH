@@ -1,11 +1,68 @@
+# Валюты и их настройки
 Valet:
+  # Имя валюты (только латиница, цифры и _)
   coin:
+    # Можно ли конвертировать в другие валюты (пока не реализовано)
     can_convert: false
-    limit: 100_000_000
+    # Лимит валюты для игрока
+    limit: 100000000
+    # Привязка курса к другой валюте (пока не реализовано)
+    # Будет обесценивать валюту, если её кол-во равно или выше привязанной
     connect: 'none'
   valet23:
     can_convert: false
-    limit: 100_000_000
+    limit: 100000000
     connect: 'coin'
+
+# База данных
 Database:
+  # Строка подключения. Примеры:
+  #   jdbc:sqlite:plugins/InfValets/data.db
+  #   jdbc:postgresql://localhost:5432/db?user=USER&password=PASS
   url: 'jdbc:sqlite:plugins/InfValets/data.db'
+
+Messages:
+  prefix: '&7[&dInf&6Valets&7]'
+  Errors:
+    not-permission: '&cНедостаточно прав!'
+    database: '&cОшибка базы данных. Сообщите администрации!'
+    player-not-found: '&cИгрок не найден!'
+    unknown-valet: '&cТакой валюты не существует!'
+    invalid-amount: '&cУкажите корректную сумму!'
+    only-players: '&cЭту команду может использовать только игрок!'
+    not-enough: '&cНедостаточно средств!'
+    limit-reached: '&cПревышен лимит валюты!'
+    pay-self: '&cНельзя перевести деньги самому себе!'
+  usage-balance: '&7Использование: &e/balance <игрок|валюта|top>'
+  usage-top: '&7Использование: &e/balance top <валюта>'
+  usage-admin: '&7Использование: &e/balance <give|take|set> <игрок> <валюта> <сумма>'
+  usage-pay: '&7Использование: &e/pay <игрок> [валюта] <сумма>'
+  # Плейсхолдеры: %player% %valet% %amount% %pos%
+  balance-header: '&6В вашем кошельке:'
+  balance-header-other: '&6Кошелёк игрока &e%player%&6:'
+  balance-line: '&e%valet% &7- &a%amount%'
+  top-header: '&6Топ по валюте &e%valet%&6:'
+  top-line: '&7%pos%. &e%player% &7- &a%amount%'
+  top-empty: '&7Пока никого нет.'
+  admin-give: '&aИгроку &e%player% &aвыдано &e%amount% %valet%'
+  admin-take: '&aУ игрока &e%player% &aсписано &e%amount% %valet%'
+  admin-set: '&aБаланс игрока &e%player% &aв &e%valet% &aтеперь &e%amount%'
+  pay-sent: '&aВы перевели &e%amount% %valet% &aигроку &e%player%'
+  pay-received: '&aИгрок &e%player% &aперевёл вам &e%amount% %valet%'
+
+# Готовые команды (пока не реализовано)
+CostCommands:
+  # Название команды
+  say-hello:
+    # Стоимость исполнения команды
+    cost: 100
+    # Тип исполнения команд
+    # SERVER = исполняет команды от имени сервера
+    # PLAYER = исполняет команды от именя игрока
+    type: SERVER
+    # Список исполняемых команд (без ведущего "/")
+    # Поддерживаемые заполнители:
+    # $player = подставляет имя игрока
+    commands:
+      - 'broadcast &aИгрок: &6$player &aактивировал команду!'
+      - 'say &6$player &aПроверил команду!'

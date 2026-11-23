@@ -3,26 +3,30 @@ package me.v0rham.infvalets;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 
+import java.sql.SQLException;
+import java.util.Locale;
+
 public class PlaceholdersAPI extends PlaceholderExpansion {
+
+    private final Main plugin;
+
+    public PlaceholdersAPI(Main plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public String getAuthor() {
-        return "V0rHaM";
+        return String.join(", ", plugin.getDescription().getAuthors());
     }
 
     @Override
     public String getIdentifier() {
-        return Main.instance.getDescription().getName();
+        return "infvalets";
     }
 
     @Override
     public String getVersion() {
-        return Main.instance.getDescription().getVersion();
-    }
-
-    @Override
-    public boolean canRegister() {
-        return true;
+        return plugin.getDescription().getVersion();
     }
 
     @Override
@@ -30,40 +34,21 @@ public class PlaceholdersAPI extends PlaceholderExpansion {
         return true;
     }
 
+    // %infvalets_balance_<valet_name>%
     @Override
     public String onRequest(OfflinePlayer player, String params) {
+        if (player == null) return "";
 
-//        %infvalets_balance_<valet_name>%
-
-//        File playerFile = Api.getFileSeparator("Player", player.getName().toLowerCase());
-//
-//        if (params.equalsIgnoreCase("clan")) {
-//            if (playerFile.exists()) {
-//                String startName = Api.getConfigString("Default.Brackets.start");
-//                String endName = Api.getConfigString("Default.Brackets.end");
-//                String name = Api.loadYaml(playerFile).getString("Player.Clan");
-//                return Api.translateColor(startName + name + endName);
-//            }
-//            return "";
-//        }
-//        if (params.equalsIgnoreCase("role")) {
-//            if (playerFile.exists()) {
-//                return Api.translateColor(Api.loadYaml(playerFile).getString("Player.Role"));
-//            }
-//            return "";
-//        }
-//        if (params.equalsIgnoreCase("shortname")) {
-//            if (playerFile.exists()) {
-//                File clanFile = Api.getClanFile(Api.getClanNameInPlayerFile(player.getName(), false));
-//                if (clanFile.exists()) {
-//                    String startName = Api.getConfigString("Default.Brackets.start");
-//                    String endName = Api.getConfigString("Default.Brackets.end");
-//                    String shortname = Api.loadYaml(clanFile).getString("Clan.ShortName");
-//                    return Api.translateColor(startName + shortname + endName);
-//                }
-//            }
-//            return "";
-//        }
+        String key = params.toLowerCase(Locale.ROOT);
+        if (key.startsWith("balance_")) {
+            String valet = plugin.findValet(key.substring("balance_".length()));
+            if (valet == null) return "";
+            try {
+                return String.valueOf(plugin.getData().getBalance(player.getUniqueId(), valet));
+            } catch (SQLException exception) {
+                return "";
+            }
+        }
         return null;
     }
 }

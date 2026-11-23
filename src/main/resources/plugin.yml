@@ -1,22 +1,35 @@
 name: InfValets
-version: 1.0.0
+version: ${project.version}
 main: me.v0rham.infvalets.Main
-api-version: 1.13
+api-version: '1.19'
 authors: [ V0rHaM ]
+softdepend: [ PlaceholderAPI, Vault ]
+
+# Драйвер PostgreSQL подгружается сервером при старте (Paper/Spigot 1.16.5+)
+libraries:
+  - org.postgresql:postgresql:42.5.0
 
 commands:
   balance:
-    usage: /<command>
+    usage: /<command> [top <валюта> | <игрок> | <валюта>]
     description: Shows the balance
     aliases:
       - bal
       - money
   pay:
-    usage: /<command> [player name] [cash]
+    usage: /<command> <игрок> [валюта] <сумма>
     description: Transfers money to another account
-  paycommands:
-    usage: /<command> [cost] [server|player] [command]
-    description: Executes commands for the number of coins
-    aliases:
-      - paycmd
-      - payc
+
+permissions:
+  infvalets.balance:
+    description: Просмотр своего баланса и топа
+    default: true
+  infvalets.balance.others:
+    description: Просмотр баланса других игроков
+    default: op
+  infvalets.pay:
+    description: Переводы между игроками
+    default: true
+  infvalets.admin:
+    description: give / take / set
+    default: op
