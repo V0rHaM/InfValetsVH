@@ -33,6 +33,7 @@ Messages:
     not-enough: '&cНедостаточно средств!'
     limit-reached: '&cПревышен лимит валюты!'
     pay-self: '&cНельзя перевести деньги самому себе!'
+    cancelled: '&cОперация отменена.'
     unknown-costcommand: '&cТакой платной команды нет!'
   usage-balance: '&7Использование: &e/balance <игрок|валюта|top>'
   usage-top: '&7Использование: &e/balance top <валюта>'

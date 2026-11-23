@@ -32,6 +32,25 @@ api.getTop("coin", 10);                                // List<TopEntry>
 * Методы не бросают исключений, потокобезопасны и могут вызываться из асинхронных задач.
 * Списание и перевод атомарны: баланс не уйдёт в минус и не превысит лимит валюты.
 
+## События
+
+* `ValetTransactionEvent` — ДО изменения баланса, можно отменить (`setCancelled(true)`);
+  тогда операция вернёт `TransactionResult.CANCELLED`.
+* `ValetBalanceChangedEvent` — ПОСЛЕ успешного изменения (отменить нельзя).
+
+Типы операций: `DEPOSIT`, `WITHDRAW`, `SET`, `TRANSFER` (при переводе `getSource()` — отправитель,
+`getTarget()` — получатель). События вызываются и для команд самого плагина
+(`/pay`, `/balance give|take|set`, `/costcommands`).
+
+Если API вызвали не из главного потока, события асинхронные — проверяйте `event.isAsynchronous()`.
+
+```java
+@EventHandler
+public void onTx(ValetTransactionEvent e) {
+    if (e.getValet().equals("coin") && e.getAmount() > 1_000_000) e.setCancelled(true);
+}
+```
+
 ## Плейсхолдеры (PlaceholderAPI)
 
 `%infvalets_balance_<валюта>%`

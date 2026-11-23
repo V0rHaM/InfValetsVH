@@ -69,6 +69,35 @@ public final class Api {
         return player.getName() != null ? player.getName() : player.getUniqueId().toString();
     }
 
+    /** Отправляет отправителю сообщение об ошибке, соответствующее результату операции. */
+    public static void sendError(CommandSender sender, TransactionResult result) {
+        String path;
+        switch (result) {
+            case INSUFFICIENT_FUNDS:
+                path = "Messages.Errors.not-enough";
+                break;
+            case LIMIT_REACHED:
+                path = "Messages.Errors.limit-reached";
+                break;
+            case UNKNOWN_VALET:
+                path = "Messages.Errors.unknown-valet";
+                break;
+            case INVALID_AMOUNT:
+                path = "Messages.Errors.invalid-amount";
+                break;
+            case SAME_ACCOUNT:
+                path = "Messages.Errors.pay-self";
+                break;
+            case CANCELLED:
+                path = "Messages.Errors.cancelled";
+                break;
+            default:
+                path = "Messages.Errors.database";
+                break;
+        }
+        sender.sendMessage(getMessage(path, true));
+    }
+
     public static void dbError(CommandSender sender, SQLException exception) {
         Main.getInstance().getLogger().log(Level.SEVERE, "Database error", exception);
         sender.sendMessage(getMessage("Messages.Errors.database", true));

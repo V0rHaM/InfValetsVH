@@ -2,6 +2,7 @@ package me.v0rham.infvalets.api;
 
 import me.v0rham.infvalets.Main;
 import me.v0rham.infvalets.database.DBUpdate;
+import org.bukkit.Bukkit;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -12,7 +13,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
-/** Реализация {@link InfValetsAPI}. Регистрируется в ServicesManager в Main#onEnable. */
+/**
+ * Реализация {@link InfValetsAPI}. Регистрируется в ServicesManager в Main#onEnable.
+ * Через неё же работают и команды плагина, поэтому события вызываются для любых изменений баланса.
+ */
 public class InfValetsAPIImpl implements InfValetsAPI {
 
     private final Main plugin;
@@ -60,13 +64,17 @@ public class InfValetsAPIImpl implements InfValetsAPI {
         if (resolved == null) return TransactionResult.UNKNOWN_VALET;
         if (amount <= 0) return TransactionResult.INVALID_AMOUNT;
         if (!plugin.isEnabled()) return TransactionResult.ERROR;
+        if (!callPre(TransactionType.DEPOSIT, uuid, null, resolved, amount)) return TransactionResult.CANCELLED;
         try {
-            return data().add(uuid, playerName, resolved, amount, plugin.getLimit(resolved))
-                    ? TransactionResult.SUCCESS : TransactionResult.LIMIT_REACHED;
+            if (!data().add(uuid, playerName, resolved, amount, plugin.getLimit(resolved))) {
+                return TransactionResult.LIMIT_REACHED;
+            }
         } catch (SQLException exception) {
             log(exception);
             return TransactionResult.ERROR;
         }
+        callPost(TransactionType.DEPOSIT, uuid, null, resolved, amount);
+        return TransactionResult.SUCCESS;
     }
 
     @Override
@@ -75,13 +83,15 @@ public class InfValetsAPIImpl implements InfValetsAPI {
         if (resolved == null) return TransactionResult.UNKNOWN_VALET;
         if (amount <= 0) return TransactionResult.INVALID_AMOUNT;
         if (!plugin.isEnabled()) return TransactionResult.ERROR;
+        if (!callPre(TransactionType.WITHDRAW, uuid, null, resolved, amount)) return TransactionResult.CANCELLED;
         try {
-            return data().take(uuid, resolved, amount)
-                    ? TransactionResult.SUCCESS : TransactionResult.INSUFFICIENT_FUNDS;
+            if (!data().take(uuid, resolved, amount)) return TransactionResult.INSUFFICIENT_FUNDS;
         } catch (SQLException exception) {
             log(exception);
             return TransactionResult.ERROR;
         }
+        callPost(TransactionType.WITHDRAW, uuid, null, resolved, amount);
+        return TransactionResult.SUCCESS;
     }
 
     @Override
@@ -91,13 +101,15 @@ public class InfValetsAPIImpl implements InfValetsAPI {
         if (amount < 0) return TransactionResult.INVALID_AMOUNT;
         if (amount > plugin.getLimit(resolved)) return TransactionResult.LIMIT_REACHED;
         if (!plugin.isEnabled()) return TransactionResult.ERROR;
+        if (!callPre(TransactionType.SET, uuid, null, resolved, amount)) return TransactionResult.CANCELLED;
         try {
             data().set(uuid, playerName, resolved, amount);
-            return TransactionResult.SUCCESS;
         } catch (SQLException exception) {
             log(exception);
             return TransactionResult.ERROR;
         }
+        callPost(TransactionType.SET, uuid, null, resolved, amount);
+        return TransactionResult.SUCCESS;
     }
 
     @Override
@@ -107,19 +119,24 @@ public class InfValetsAPIImpl implements InfValetsAPI {
         if (amount <= 0) return TransactionResult.INVALID_AMOUNT;
         if (from.equals(to)) return TransactionResult.SAME_ACCOUNT;
         if (!plugin.isEnabled()) return TransactionResult.ERROR;
+        if (!callPre(TransactionType.TRANSFER, to, from, resolved, amount)) return TransactionResult.CANCELLED;
         try {
-            switch (data().transfer(from, to, toName, resolved, amount, plugin.getLimit(resolved))) {
-                case OK:
-                    return TransactionResult.SUCCESS;
+            DBUpdate.TransferResult result =
+                    data().transfer(from, to, toName, resolved, amount, plugin.getLimit(resolved));
+            switch (result) {
                 case NOT_ENOUGH:
                     return TransactionResult.INSUFFICIENT_FUNDS;
-                default:
+                case LIMIT:
                     return TransactionResult.LIMIT_REACHED;
+                default:
+                    break;
             }
         } catch (SQLException exception) {
             log(exception);
             return TransactionResult.ERROR;
         }
+        callPost(TransactionType.TRANSFER, to, from, resolved, amount);
+        return TransactionResult.SUCCESS;
     }
 
     @Override
@@ -136,6 +153,19 @@ public class InfValetsAPIImpl implements InfValetsAPI {
             log(exception);
             return Collections.emptyList();
         }
+    }
+
+    // true — можно продолжать, false — событие отменили
+    private boolean callPre(TransactionType type, UUID target, UUID source, String valet, long amount) {
+        ValetTransactionEvent event = new ValetTransactionEvent(
+                !Bukkit.isPrimaryThread(), type, target, source, valet, amount);
+        Bukkit.getPluginManager().callEvent(event);
+        return !event.isCancelled();
+    }
+
+    private void callPost(TransactionType type, UUID target, UUID source, String valet, long amount) {
+        Bukkit.getPluginManager().callEvent(new ValetBalanceChangedEvent(
+                !Bukkit.isPrimaryThread(), type, target, source, valet, amount));
     }
 
     private DBUpdate data() {

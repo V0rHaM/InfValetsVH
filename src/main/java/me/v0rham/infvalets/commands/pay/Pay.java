@@ -2,7 +2,7 @@ package me.v0rham.infvalets.commands.pay;
 
 import me.v0rham.infvalets.Main;
 import me.v0rham.infvalets.api.Api;
-import me.v0rham.infvalets.database.DBUpdate.TransferResult;
+import me.v0rham.infvalets.api.TransactionResult;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -12,7 +12,6 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,10 +42,6 @@ public class Pay implements CommandExecutor, TabCompleter {
             sender.sendMessage(Api.getMessage("Messages.Errors.player-not-found", true));
             return true;
         }
-        if (target.getUniqueId().equals(from.getUniqueId())) {
-            sender.sendMessage(Api.getMessage("Messages.Errors.pay-self", true));
-            return true;
-        }
 
         String valet;
         String amountText;
@@ -72,21 +67,10 @@ public class Pay implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        try {
-            TransferResult result = plugin.getData().transfer(from.getUniqueId(), target.getUniqueId(),
-                    target.getName(), valet, amount, plugin.getLimit(valet));
-            switch (result) {
-                case NOT_ENOUGH:
-                    sender.sendMessage(Api.getMessage("Messages.Errors.not-enough", true));
-                    return true;
-                case LIMIT:
-                    sender.sendMessage(Api.getMessage("Messages.Errors.limit-reached", true));
-                    return true;
-                default:
-                    break;
-            }
-        } catch (SQLException exception) {
-            Api.dbError(sender, exception);
+        TransactionResult result = plugin.getApi().transfer(
+                from.getUniqueId(), target.getUniqueId(), target.getName(), valet, amount);
+        if (!result.isSuccess()) {
+            Api.sendError(sender, result);
             return true;
         }
 

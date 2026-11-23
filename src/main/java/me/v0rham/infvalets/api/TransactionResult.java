@@ -14,6 +14,8 @@ public enum TransactionResult {
     LIMIT_REACHED,
     /** Перевод самому себе. */
     SAME_ACCOUNT,
+    /** Операцию отменил другой плагин через {@link ValetTransactionEvent}. */
+    CANCELLED,
     /** Ошибка базы данных (подробности в консоли сервера) или плагин отключён. */
     ERROR;
 

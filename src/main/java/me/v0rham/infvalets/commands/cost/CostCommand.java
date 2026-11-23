@@ -2,6 +2,7 @@ package me.v0rham.infvalets.commands.cost;
 
 import me.v0rham.infvalets.Main;
 import me.v0rham.infvalets.api.Api;
+import me.v0rham.infvalets.api.TransactionResult;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,7 +12,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,14 +52,12 @@ public class CostCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        try {
-            if (cost > 0 && !plugin.getData().take(player.getUniqueId(), valet, cost)) {
-                sender.sendMessage(Api.getMessage("Messages.Errors.not-enough", true));
+        if (cost > 0) {
+            TransactionResult result = plugin.getApi().withdraw(player.getUniqueId(), valet, cost);
+            if (!result.isSuccess()) {
+                Api.sendError(sender, result);
                 return true;
             }
-        } catch (SQLException exception) {
-            Api.dbError(sender, exception);
-            return true;
         }
 
         boolean asPlayer = "PLAYER".equalsIgnoreCase(section.getString("type", "SERVER"));

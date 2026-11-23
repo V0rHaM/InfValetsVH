@@ -2,45 +2,40 @@ package me.v0rham.infvalets.commands.balance;
 
 import me.v0rham.infvalets.Main;
 import me.v0rham.infvalets.api.Api;
+import me.v0rham.infvalets.api.InfValetsAPI;
+import me.v0rham.infvalets.api.TransactionResult;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 
-import java.sql.SQLException;
-
-/** Админские операции: give / take / set. */
+/** Админские операции: give / take / set (идут через API, поэтому вызывают события). */
 public class Money {
 
-    public static void give(CommandSender sender, OfflinePlayer target, String valet, long amount) throws SQLException {
-        Main plugin = Main.getInstance();
-        boolean ok = plugin.getData().add(target.getUniqueId(), target.getName(), valet, amount, plugin.getLimit(valet));
-        if (ok) {
-            sender.sendMessage(result("Messages.admin-give", target, valet, amount));
-        } else {
-            sender.sendMessage(Api.getMessage("Messages.Errors.limit-reached", true));
-        }
+    public static void give(CommandSender sender, OfflinePlayer target, String valet, long amount) {
+        TransactionResult result = api().deposit(target.getUniqueId(), target.getName(), valet, amount);
+        report(sender, result, "Messages.admin-give", target, valet, amount);
     }
 
-    public static void take(CommandSender sender, OfflinePlayer target, String valet, long amount) throws SQLException {
-        boolean ok = Main.getInstance().getData().take(target.getUniqueId(), valet, amount);
-        if (ok) {
-            sender.sendMessage(result("Messages.admin-take", target, valet, amount));
-        } else {
-            sender.sendMessage(Api.getMessage("Messages.Errors.not-enough", true));
-        }
+    public static void take(CommandSender sender, OfflinePlayer target, String valet, long amount) {
+        TransactionResult result = api().withdraw(target.getUniqueId(), valet, amount);
+        report(sender, result, "Messages.admin-take", target, valet, amount);
     }
 
-    public static void set(CommandSender sender, OfflinePlayer target, String valet, long amount) throws SQLException {
-        Main plugin = Main.getInstance();
-        if (amount > plugin.getLimit(valet)) {
-            sender.sendMessage(Api.getMessage("Messages.Errors.limit-reached", true));
+    public static void set(CommandSender sender, OfflinePlayer target, String valet, long amount) {
+        TransactionResult result = api().set(target.getUniqueId(), target.getName(), valet, amount);
+        report(sender, result, "Messages.admin-set", target, valet, amount);
+    }
+
+    private static InfValetsAPI api() {
+        return Main.getInstance().getApi();
+    }
+
+    private static void report(CommandSender sender, TransactionResult result, String path,
+                               OfflinePlayer target, String valet, long amount) {
+        if (!result.isSuccess()) {
+            Api.sendError(sender, result);
             return;
         }
-        plugin.getData().set(target.getUniqueId(), target.getName(), valet, amount);
-        sender.sendMessage(result("Messages.admin-set", target, valet, amount));
-    }
-
-    private static String result(String path, OfflinePlayer target, String valet, long amount) {
-        return Api.getMessage(path, true,
-                "%player%", Api.nameOf(target), "%valet%", valet, "%amount%", Api.format(amount));
+        sender.sendMessage(Api.getMessage(path, true,
+                "%player%", Api.nameOf(target), "%valet%", valet, "%amount%", Api.format(amount)));
     }
 }

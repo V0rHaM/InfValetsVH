@@ -33,6 +33,7 @@ public class Main extends JavaPlugin {
 
     private DBConnect database;
     private DBUpdate data;
+    private InfValetsAPIImpl api;
     // имя в нижнем регистре -> имя как в config.yml
     private final Map<String, String> valets = new LinkedHashMap<>();
 
@@ -63,8 +64,8 @@ public class Main extends JavaPlugin {
         }
 
         // Публичное API: другие плагины получают его через InfValetsAPI.get()
-        getServer().getServicesManager().register(InfValetsAPI.class, new InfValetsAPIImpl(this),
-                this, ServicePriority.Normal);
+        api = new InfValetsAPIImpl(this);
+        getServer().getServicesManager().register(InfValetsAPI.class, api, this, ServicePriority.Normal);
 
         registerCommand("balance", new Balance(), new BalanceTabComplete());
         Pay pay = new Pay();
@@ -135,6 +136,10 @@ public class Main extends JavaPlugin {
 
     public DBUpdate getData() {
         return data;
+    }
+
+    public InfValetsAPIImpl getApi() {
+        return api;
     }
 
     public static Main getInstance() {
