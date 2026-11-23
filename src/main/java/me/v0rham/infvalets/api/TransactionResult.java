@@ -16,6 +16,10 @@ public enum TransactionResult {
     SAME_ACCOUNT,
     /** Операцию отменил другой плагин через {@link ValetTransactionEvent}. */
     CANCELLED,
+    /** Такой обмен не настроен или выключен (can_convert / Convert.pairs). */
+    NOT_CONVERTIBLE,
+    /** После обмена получилось бы 0 единиц. */
+    TOO_SMALL,
     /** Ошибка базы данных (подробности в консоли сервера) или плагин отключён. */
     ERROR;
 

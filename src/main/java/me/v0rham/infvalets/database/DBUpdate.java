@@ -150,6 +150,89 @@ public class DBUpdate {
         return null;
     }
 
+    // ---------------------------------------------------------------- конвертация валют
+
+    // Отдельный префикс, чтобы имя таблицы не пересеклось с таблицей валюты
+    private static final String HISTORY_TABLE = "InfValetsLog_conversions";
+
+    public synchronized void createHistoryTable() throws SQLException {
+        try (Statement statement = db.getConnection().createStatement()) {
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + HISTORY_TABLE
+                    + " (TS BIGINT NOT NULL, UUID VARCHAR(36) NOT NULL,"
+                    + " FROM_VALET VARCHAR(32) NOT NULL, TO_VALET VARCHAR(32) NOT NULL,"
+                    + " AMOUNT_IN BIGINT NOT NULL, AMOUNT_OUT BIGINT NOT NULL)");
+            statement.executeUpdate("CREATE INDEX IF NOT EXISTS InfValetsLog_conversions_idx ON "
+                    + HISTORY_TABLE + " (TO_VALET, TS)");
+        }
+    }
+
+    /** Удаляет записи истории конвертаций старше указанного времени. */
+    public synchronized void pruneHistory(long beforeMillis) throws SQLException {
+        String sql = "DELETE FROM " + HISTORY_TABLE + " WHERE TS < ?";
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setLong(1, beforeMillis);
+            ps.executeUpdate();
+        }
+    }
+
+    /** Сколько конвертаций В эту валюту было с момента sinceMillis. */
+    public synchronized long countConversions(String toValet, long sinceMillis) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM " + HISTORY_TABLE + " WHERE TO_VALET = ? AND TS >= ?";
+        try (PreparedStatement ps = db.getConnection().prepareStatement(sql)) {
+            ps.setString(1, toValet);
+            ps.setLong(2, sinceMillis);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0L;
+            }
+        }
+    }
+
+    /** Общее количество валюты у всех игроков. */
+    public synchronized long getTotal(String valet) throws SQLException {
+        String sql = "SELECT COALESCE(SUM(VALET_COUNT), 0) FROM " + table(valet);
+        try (Statement statement = db.getConnection().createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            return rs.next() ? rs.getLong(1) : 0L;
+        }
+    }
+
+    /** Атомарный обмен: списываем amountIn валюты from, зачисляем amountOut валюты to, пишем в историю. */
+    public synchronized TransferResult convert(UUID uuid, String name, String from, String to,
+                                               long amountIn, long amountOut, long limitTo,
+                                               long now) throws SQLException {
+        Connection connection = db.getConnection();
+        boolean oldAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            if (!take(uuid, from, amountIn)) {
+                connection.rollback();
+                return TransferResult.NOT_ENOUGH;
+            }
+            if (!add(uuid, name, to, amountOut, limitTo)) {
+                connection.rollback();
+                return TransferResult.LIMIT;
+            }
+            String sql = "INSERT INTO " + HISTORY_TABLE
+                    + " (TS, UUID, FROM_VALET, TO_VALET, AMOUNT_IN, AMOUNT_OUT) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setLong(1, now);
+                ps.setString(2, uuid.toString());
+                ps.setString(3, from);
+                ps.setString(4, to);
+                ps.setLong(5, amountIn);
+                ps.setLong(6, amountOut);
+                ps.executeUpdate();
+            }
+            connection.commit();
+            return TransferResult.OK;
+        } catch (SQLException exception) {
+            connection.rollback();
+            throw exception;
+        } finally {
+            connection.setAutoCommit(oldAutoCommit);
+        }
+    }
+
     // Создаёт запись игрока (баланс 0), если её нет, и обновляет ник (если он известен)
     private void ensureRow(Connection connection, UUID uuid, String name, String valet) throws SQLException {
         String insert = db.isPostgres()

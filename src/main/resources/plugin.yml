@@ -41,6 +41,12 @@ commands:
     description: Plugin management
     aliases:
       - ivalets
+  convert:
+    usage: /<command> <из> <в> <сумма> | /<command> rate [из] [в]
+    description: Exchange one currency for another
+    aliases:
+      - exchange
+      - conv
 
 permissions:
   infvalets.balance:
@@ -54,6 +60,9 @@ permissions:
     default: true
   infvalets.costcommands:
     description: Платные команды из секции CostCommands
+    default: true
+  infvalets.convert:
+    description: Обмен валют и просмотр курсов
     default: true
   infvalets.admin:
     description: give / take / set

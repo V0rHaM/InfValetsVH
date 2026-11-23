@@ -6,10 +6,12 @@ import me.v0rham.infvalets.commands.admin.InfValetsCommand;
 import me.v0rham.infvalets.commands.balance.BalTop;
 import me.v0rham.infvalets.commands.balance.Balance;
 import me.v0rham.infvalets.commands.balance.BalanceTabComplete;
+import me.v0rham.infvalets.commands.convert.Convert;
 import me.v0rham.infvalets.commands.cost.CostCommand;
 import me.v0rham.infvalets.commands.eco.Eco;
 import me.v0rham.infvalets.commands.pay.Pay;
 import me.v0rham.infvalets.hook.VaultHook;
+import me.v0rham.infvalets.convert.ConversionService;
 import me.v0rham.infvalets.database.DBConnect;
 import me.v0rham.infvalets.database.DBUpdate;
 import org.bstats.bukkit.Metrics;
@@ -40,6 +42,7 @@ public class Main extends JavaPlugin {
     private DBConnect database;
     private DBUpdate data;
     private InfValetsAPIImpl api;
+    private ConversionService conversion;
     // имя в нижнем регистре -> имя как в config.yml
     private final Map<String, String> valets = new LinkedHashMap<>();
 
@@ -57,11 +60,15 @@ public class Main extends JavaPlugin {
 
         database = new DBConnect(this);
         data = new DBUpdate(database);
+        conversion = new ConversionService(this);
         try {
             database.connect();
             for (String valet : valets.values()) {
                 data.createTable(valet);
             }
+            data.createHistoryTable();
+            // История обмена нужна только для расчёта курса: храним 30 дней
+            data.pruneHistory(System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000);
             getLogger().info("Database connected!");
         } catch (SQLException exception) {
             getLogger().log(Level.SEVERE, "Не удалось подключиться к базе данных. Плагин отключён.", exception);
@@ -84,6 +91,9 @@ public class Main extends JavaPlugin {
         registerCommand("baltop", balTop, balTop);
         InfValetsCommand admin = new InfValetsCommand();
         registerCommand("infvalets", admin, admin);
+        Convert convert = new Convert();
+        registerCommand("convert", convert, convert);
+        conversion.validate();
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new PlaceholdersAPI(this).register();
@@ -115,6 +125,7 @@ public class Main extends JavaPlugin {
             for (String valet : valets.values()) {
                 data.createTable(valet);
             }
+            conversion.validate();
             return true;
         } catch (SQLException exception) {
             getLogger().log(Level.SEVERE, "Не удалось создать таблицы после перезагрузки", exception);
@@ -169,6 +180,15 @@ public class Main extends JavaPlugin {
 
     public InfValetsAPIImpl getApi() {
         return api;
+    }
+
+    public ConversionService getConversion() {
+        return conversion;
+    }
+
+    /** Участвует ли валюта в конвертации (Valet.<имя>.can_convert). */
+    public boolean canConvert(String valet) {
+        return getConfig().getBoolean("Valet." + valet + ".can_convert", false);
     }
 
     public static Main getInstance() {

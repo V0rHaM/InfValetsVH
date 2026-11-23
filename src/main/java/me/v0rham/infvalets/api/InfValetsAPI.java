@@ -60,6 +60,20 @@ public interface InfValetsAPI {
     /** Топ по валюте (по убыванию). Пустой список при ошибке или неизвестной валюте. */
     List<TopEntry> getTop(String valet, int size);
 
+    // ---- конвертация валют ----
+
+    /** Текущий курс (сколько «в» за 1 «из», без комиссии) или -1, если обмен недоступен. */
+    double getRate(String fromValet, String toValet);
+
+    /** Расчёт обмена без выполнения: сколько спишется и сколько будет получено. Баланс не проверяется. */
+    ConversionResult quote(String fromValet, String toValet, long amount);
+
+    /**
+     * Обмен валюты по курсу из config.yml (FIXED или DYNAMIC). Атомарный.
+     * Вызывает ValetTransactionEvent для списания и для зачисления.
+     */
+    ConversionResult convert(UUID uuid, String playerName, String fromValet, String toValet, long amount);
+
     // ---- удобные перегрузки для OfflinePlayer ----
 
     default long getBalance(OfflinePlayer player, String valet) {

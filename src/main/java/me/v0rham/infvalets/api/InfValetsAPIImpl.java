@@ -1,6 +1,7 @@
 package me.v0rham.infvalets.api;
 
 import me.v0rham.infvalets.Main;
+import me.v0rham.infvalets.convert.ConversionService;
 import me.v0rham.infvalets.database.DBUpdate;
 import org.bukkit.Bukkit;
 
@@ -153,6 +154,105 @@ public class InfValetsAPIImpl implements InfValetsAPI {
             log(exception);
             return Collections.emptyList();
         }
+    }
+
+    // ------------------------------------------------------------ конвертация
+
+    private static final class Plan {
+        String from;
+        String to;
+        ConversionService.Pair pair;
+        double rate;
+        long out;
+        ConversionResult error;
+
+        Plan fail(TransactionResult status) {
+            error = ConversionResult.failure(status);
+            return this;
+        }
+    }
+
+    private ConversionService conversion() {
+        return plugin.getConversion();
+    }
+
+    private Plan plan(String from, String to, long amount) {
+        Plan plan = new Plan();
+        plan.from = plugin.findValet(from);
+        plan.to = plugin.findValet(to);
+        if (plan.from == null || plan.to == null) return plan.fail(TransactionResult.UNKNOWN_VALET);
+        if (amount <= 0) return plan.fail(TransactionResult.INVALID_AMOUNT);
+        if (!plugin.isEnabled()) return plan.fail(TransactionResult.ERROR);
+
+        plan.pair = conversion().getPair(plan.from, plan.to);
+        if (plan.pair == null) return plan.fail(TransactionResult.NOT_CONVERTIBLE);
+        try {
+            plan.rate = conversion().getRate(plan.pair);
+        } catch (SQLException exception) {
+            log(exception);
+            return plan.fail(TransactionResult.ERROR);
+        }
+
+        long out = ConversionService.calculate(plan.pair, amount, plan.rate);
+        if (out < 0) return plan.fail(TransactionResult.LIMIT_REACHED);
+        if (out == 0) return plan.fail(TransactionResult.TOO_SMALL);
+        plan.out = out;
+        return plan;
+    }
+
+    @Override
+    public double getRate(String fromValet, String toValet) {
+        String from = plugin.findValet(fromValet);
+        String to = plugin.findValet(toValet);
+        if (from == null || to == null || !plugin.isEnabled()) return -1;
+        ConversionService.Pair pair = conversion().getPair(from, to);
+        if (pair == null) return -1;
+        try {
+            return conversion().getRate(pair);
+        } catch (SQLException exception) {
+            log(exception);
+            return -1;
+        }
+    }
+
+    @Override
+    public ConversionResult quote(String fromValet, String toValet, long amount) {
+        Plan plan = plan(fromValet, toValet, amount);
+        if (plan.error != null) return plan.error;
+        return new ConversionResult(TransactionResult.SUCCESS, amount, plan.out, plan.rate);
+    }
+
+    @Override
+    public ConversionResult convert(UUID uuid, String playerName, String fromValet, String toValet, long amount) {
+        Plan plan = plan(fromValet, toValet, amount);
+        if (plan.error != null) return plan.error;
+
+        if (!callPre(TransactionType.WITHDRAW, uuid, null, plan.from, amount)
+                || !callPre(TransactionType.DEPOSIT, uuid, null, plan.to, plan.out)) {
+            return ConversionResult.failure(TransactionResult.CANCELLED);
+        }
+
+        try {
+            DBUpdate.TransferResult result = data().convert(uuid, playerName, plan.from, plan.to,
+                    amount, plan.out, plugin.getLimit(plan.to), System.currentTimeMillis());
+            switch (result) {
+                case NOT_ENOUGH:
+                    return ConversionResult.failure(TransactionResult.INSUFFICIENT_FUNDS);
+                case LIMIT:
+                    return ConversionResult.failure(TransactionResult.LIMIT_REACHED);
+                default:
+                    break;
+            }
+        } catch (SQLException exception) {
+            log(exception);
+            return ConversionResult.failure(TransactionResult.ERROR);
+        }
+
+        conversion().invalidate(plan.from);
+        conversion().invalidate(plan.to);
+        callPost(TransactionType.WITHDRAW, uuid, null, plan.from, amount);
+        callPost(TransactionType.DEPOSIT, uuid, null, plan.to, plan.out);
+        return new ConversionResult(TransactionResult.SUCCESS, amount, plan.out, plan.rate);
     }
 
     // true — можно продолжать, false — событие отменили

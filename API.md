@@ -13,12 +13,27 @@ InfValets — самостоятельная мультивалютная эко
 | `/balance top [валюта]`, `/baltop [валюта]` | топ по валюте | `infvalets.balance` |
 | `/pay <игрок> [валюта] <сумма>` | перевод игроку | `infvalets.pay` |
 | `/costcommands <название>` (`/paycmd`) | платная команда из конфига | `infvalets.costcommands` |
+| `/convert <из> <в> <сумма>`, `/convert rate [из] [в]` (`/exchange`) | обмен валют и курсы | `infvalets.convert` |
 | `/eco give\|take\|set <игрок> [валюта] <сумма>` | админская выдача / списание / установка | `infvalets.admin` |
 | `/eco reset <игрок> [валюта]` | обнулить баланс | `infvalets.admin` |
 | `/balance give\|take\|set ...` | то же, что `/eco` | `infvalets.admin` |
 | `/infvalets reload` | перечитать config.yml | `infvalets.admin` |
 
 Валюту можно не указывать, если в config.yml она одна.
+
+## Обмен валют
+
+Включается флагом `can_convert: true` у обеих валют и парой в `Convert.pairs` (пары направленные: `coin-valet23`).
+Режимы пары:
+
+* `FIXED` — постоянный курс `rate`.
+* `DYNAMIC` — курс = `rate` × фактор количества валюты × фактор частоты обменов, в пределах `min-rate`..`max-rate`:
+  * **количество**: чем больше валюты «в» у всех игроков относительно `supply.reference`, тем она дешевле (курс выше);
+  * **частота**: чем больше обменов В эту валюту за `demand.window-minutes` относительно `demand.reference-ops`,
+    тем она дороже (курс ниже).
+
+`fee-percent` — комиссия с получаемой суммы. Из API: `getRate`, `quote`, `convert`.
+Обмены пишутся в таблицу `InfValetsLog_conversions` (хранятся 30 дней).
 
 ## Совместимость
 

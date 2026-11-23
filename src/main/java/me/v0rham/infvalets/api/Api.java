@@ -7,6 +7,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.Locale;
 import java.util.UUID;
@@ -63,6 +65,11 @@ public final class Api {
         }
     }
 
+    /** Курс без лишних нулей: 10, 0.0952 */
+    public static String formatRate(double rate) {
+        return new BigDecimal(rate).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    }
+
     public static String format(long amount) {
         return String.format(Locale.ROOT, "%,d", amount);
     }
@@ -114,6 +121,12 @@ public final class Api {
                 break;
             case CANCELLED:
                 path = "Messages.Errors.cancelled";
+                break;
+            case NOT_CONVERTIBLE:
+                path = "Messages.Errors.convert-unavailable";
+                break;
+            case TOO_SMALL:
+                path = "Messages.Errors.convert-too-small";
                 break;
             default:
                 path = "Messages.Errors.database";
