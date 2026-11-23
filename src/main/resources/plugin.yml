@@ -26,6 +26,21 @@ commands:
     aliases:
       - paycmd
       - payc
+  eco:
+    usage: /<command> <give|take|set|reset> <игрок> [валюта] <сумма>
+    description: Admin economy management
+    aliases:
+      - economy
+  baltop:
+    usage: /<command> [валюта]
+    description: Top balances
+    aliases:
+      - balancetop
+  infvalets:
+    usage: /<command> reload
+    description: Plugin management
+    aliases:
+      - ivalets
 
 permissions:
   infvalets.balance:

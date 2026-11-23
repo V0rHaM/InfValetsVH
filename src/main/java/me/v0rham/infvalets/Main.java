@@ -2,13 +2,18 @@ package me.v0rham.infvalets;
 
 import me.v0rham.infvalets.api.InfValetsAPI;
 import me.v0rham.infvalets.api.InfValetsAPIImpl;
+import me.v0rham.infvalets.commands.admin.InfValetsCommand;
+import me.v0rham.infvalets.commands.balance.BalTop;
 import me.v0rham.infvalets.commands.balance.Balance;
 import me.v0rham.infvalets.commands.balance.BalanceTabComplete;
 import me.v0rham.infvalets.commands.cost.CostCommand;
+import me.v0rham.infvalets.commands.eco.Eco;
 import me.v0rham.infvalets.commands.pay.Pay;
 import me.v0rham.infvalets.hook.VaultHook;
 import me.v0rham.infvalets.database.DBConnect;
 import me.v0rham.infvalets.database.DBUpdate;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
@@ -73,6 +78,12 @@ public class Main extends JavaPlugin {
         registerCommand("pay", pay, pay);
         CostCommand cost = new CostCommand();
         registerCommand("costcommands", cost, cost);
+        Eco eco = new Eco();
+        registerCommand("eco", eco, eco);
+        BalTop balTop = new BalTop();
+        registerCommand("baltop", balTop, balTop);
+        InfValetsCommand admin = new InfValetsCommand();
+        registerCommand("infvalets", admin, admin);
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new PlaceholdersAPI(this).register();
@@ -82,6 +93,8 @@ public class Main extends JavaPlugin {
         if (getConfig().getBoolean("Vault.enabled", true) && Bukkit.getPluginManager().isPluginEnabled("Vault")) {
             VaultHook.register(this);
         }
+
+        new Metrics(this, 35530);
     }
 
     @Override
@@ -92,6 +105,21 @@ public class Main extends JavaPlugin {
             getLogger().info("Database disconnected!");
         }
         instance = null;
+    }
+
+    /** Перечитывает config.yml и создаёт таблицы для новых валют (смена Database.url требует перезапуска). */
+    public boolean reloadAll() {
+        reloadConfig();
+        loadValets();
+        try {
+            for (String valet : valets.values()) {
+                data.createTable(valet);
+            }
+            return true;
+        } catch (SQLException exception) {
+            getLogger().log(Level.SEVERE, "Не удалось создать таблицы после перезагрузки", exception);
+            return false;
+        }
     }
 
     private void registerCommand(String name, CommandExecutor executor, TabCompleter completer) {

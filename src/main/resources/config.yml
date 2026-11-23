@@ -32,7 +32,7 @@ Vault:
   name-plural: 'монет'
 
 Messages:
-  prefix: '&7[&dInf&6Valets&7]'
+  prefix: '&7[&6InfValetsVH&7]'
   Errors:
     not-permission: '&cНедостаточно прав!'
     database: '&cОшибка базы данных. Сообщите администрации!'
@@ -49,6 +49,9 @@ Messages:
   usage-top: '&7Использование: &e/balance top <валюта>'
   usage-admin: '&7Использование: &e/balance <give|take|set> <игрок> <валюта> <сумма>'
   usage-costcommand: '&7Использование: &e/costcommands <название>'
+  usage-eco: '&7Использование: &e/eco <give|take|set|reset> <игрок> [валюта] <сумма>'
+  usage-infvalets: '&7Использование: &e/infvalets reload'
+  reload-done: '&aКонфигурация перезагружена.'
   usage-pay: '&7Использование: &e/pay <игрок> [валюта] <сумма>'
   # Плейсхолдеры: %player% %valet% %amount% %pos%
   balance-header: '&6В вашем кошельке:'

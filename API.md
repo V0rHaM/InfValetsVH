@@ -3,6 +3,23 @@
 InfValets — самостоятельная мультивалютная экономика. Vault не нужен: другие плагины
 работают с ней напрямую через сервис `InfValetsAPI`.
 
+## Команды
+
+| Команда | Описание | Право |
+|---|---|---|
+| `/balance` (`/bal`, `/money`) | свои балансы по всем валютам | `infvalets.balance` |
+| `/balance <валюта>` | свой баланс в одной валюте | `infvalets.balance` |
+| `/balance <игрок> [валюта]` | чужой баланс | `infvalets.balance.others` |
+| `/balance top [валюта]`, `/baltop [валюта]` | топ по валюте | `infvalets.balance` |
+| `/pay <игрок> [валюта] <сумма>` | перевод игроку | `infvalets.pay` |
+| `/costcommands <название>` (`/paycmd`) | платная команда из конфига | `infvalets.costcommands` |
+| `/eco give\|take\|set <игрок> [валюта] <сумма>` | админская выдача / списание / установка | `infvalets.admin` |
+| `/eco reset <игрок> [валюта]` | обнулить баланс | `infvalets.admin` |
+| `/balance give\|take\|set ...` | то же, что `/eco` | `infvalets.admin` |
+| `/infvalets reload` | перечитать config.yml | `infvalets.admin` |
+
+Валюту можно не указывать, если в config.yml она одна.
+
 ## Совместимость
 
 * Minecraft **1.13 – 26.x** (Spigot, Paper и форки), одна и та же jar-сборка.
